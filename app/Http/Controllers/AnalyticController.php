@@ -10,13 +10,27 @@
 
 namespace App\Http\Controllers;
 
-
-use Illuminate\Http\Request;
+use Analytics;
+use Spatie\Analytics\Period;
 
 class AnalyticController extends Controller
 {
-    public function google(Request $request)
+    public function google()
     {
-        return response()->json(['message' => 'Hello World']);
+        $total = Analytics::fetchTotalVisitorsAndPageViews(Period::days(14));
+        $t = [];
+        $i = 0;
+        foreach ($total as $item) {
+          $datetime = $item['date']->toDateString();
+          $t['visitors'][] = ['x' => $datetime, 'y' => $item['visitors']];
+          $t['page_views'][] = ['x' => $datetime, 'y' => $item['pageViews']];
+          $i++;
+        }
+        $t['today'] = $total[--$i];
+        $t['yesterday'] = $total[--$i];
+        return response()->json([
+          'most_visited_pages' => Analytics::fetchMostVisitedPages(Period::days(14)),
+          'total' => $t
+        ]);
     }
 }
